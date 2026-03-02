@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getLLMClient, generateAndValidate } from "@/lib/llm-client";
+import { getUserLLMClient, generateAndValidate } from "@/lib/llm-client";
 import { EpicsArraySchema, type Epic } from "@/lib/schemas";
 
 export async function POST(
@@ -41,7 +41,7 @@ export async function POST(
     if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
     const project = doc.projects as Record<string, unknown>;
 
-    const llm = getLLMClient();
+    const llm = await getUserLLMClient(sb, user.id);
 
     let epics: Epic[];
     try {

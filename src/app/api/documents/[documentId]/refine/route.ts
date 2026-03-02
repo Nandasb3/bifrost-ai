@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getLLMClient } from "@/lib/llm-client";
+import { getUserLLMClient } from "@/lib/llm-client";
 import { RefinementPatchSchema } from "@/lib/schemas";
 import { z } from "zod";
 import { applyPatch } from "@/lib/patch";
@@ -47,7 +47,7 @@ export async function POST(
         metadata: { action: "refine" },
     });
 
-    const llm = getLLMClient();
+    const llm = await getUserLLMClient(sb, user.id);
 
     let patch: z.infer<typeof RefinementPatchSchema>;
     try {

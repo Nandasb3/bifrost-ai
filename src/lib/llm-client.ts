@@ -30,8 +30,8 @@ class OpenAICompatibleClient implements LLMClient {
     private readonly baseUrl: string
     private readonly model: string
 
-    constructor() {
-        this.apiKey = process.env.OPENAI_API_KEY || ''
+    constructor(apiKey?: string) {
+        this.apiKey = apiKey || process.env.OPENAI_API_KEY || ''
         this.baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '')
         this.model = process.env.OPENAI_MODEL || 'gpt-4o'
     }
@@ -125,11 +125,25 @@ class PlaceholderClient implements LLMClient {
 // ============================================================
 // Factory — picks real or placeholder based on env
 // ============================================================
-export function getLLMClient(): LLMClient {
-    if (process.env.OPENAI_API_KEY) {
-        return new OpenAICompatibleClient()
+export function getLLMClient(apiKey?: string): LLMClient {
+    const key = apiKey || process.env.OPENAI_API_KEY
+    if (key) {
+        return new OpenAICompatibleClient(key)
     }
     return new PlaceholderClient()
+}
+
+/**
+ * Helper to get LLM client with user's specific API key from profile
+ */
+export async function getUserLLMClient(supabase: any, userId: string): Promise<LLMClient> {
+    const { data } = await supabase
+        .from("profiles")
+        .select("openai_api_key")
+        .eq("id", userId)
+        .single();
+
+    return getLLMClient(data?.openai_api_key);
 }
 
 // ============================================================

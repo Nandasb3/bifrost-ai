@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getLLMClient, generateAndValidate } from "@/lib/llm-client";
+import { getUserLLMClient, generateAndValidate } from "@/lib/llm-client";
 import {
     BRDSchema,
     PRDSchema,
@@ -59,7 +59,7 @@ Story Format: ${project?.story_format || "gherkin"}
 Definition of Done: ${project?.definition_of_done || "N/A"}
 `.trim();
 
-    const llm = getLLMClient();
+    const llm = await getUserLLMClient(sb, user.id);
     let generatedContent: BRD | PRD;
 
     try {

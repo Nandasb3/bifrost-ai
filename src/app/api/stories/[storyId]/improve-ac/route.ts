@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getLLMClient, generateAndValidate } from "@/lib/llm-client";
+import { getUserLLMClient, generateAndValidate } from "@/lib/llm-client";
 import { z } from "zod";
 
 const ImprovedACSchema = z.array(
@@ -34,7 +34,7 @@ export async function POST(
     if (!story) return NextResponse.json({ error: "Story not found" }, { status: 404 });
 
     const currentACs = story.acceptance_criteria ?? [];
-    const llm = getLLMClient();
+    const llm = await getUserLLMClient(sb, user.id);
 
     try {
         const result = await generateAndValidate(

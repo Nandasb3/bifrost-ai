@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getLLMClient, generateAndValidate } from "@/lib/llm-client";
+import { getUserLLMClient, generateAndValidate } from "@/lib/llm-client";
 import { StoriesArraySchema, runQualityGate, type Story } from "@/lib/schemas";
 import { z } from "zod";
 
@@ -40,7 +40,7 @@ export async function POST(
     if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
     const project = doc.projects as Record<string, unknown>;
 
-    const llm = getLLMClient();
+    const llm = await getUserLLMClient(sb, user.id);
     const allStories: Array<Story & { epicId: string }> = [];
     let totalErrors = 0;
 

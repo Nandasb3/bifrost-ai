@@ -11,6 +11,7 @@ import {
     ChevronRight,
     Menu,
     X,
+    User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="p-3 border-t border-white/8">
+                <Link
+                    href="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium mb-1 transition-all duration-150",
+                        pathname === "/profile"
+                            ? "bg-primary/20 text-primary border border-primary/30"
+                            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                    )}
+                >
+                    <User className="w-4 h-4" />
+                    Profile Settings
+                </Link>
                 <Button
                     variant="ghost"
                     size="sm"
