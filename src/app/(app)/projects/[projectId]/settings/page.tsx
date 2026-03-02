@@ -25,6 +25,7 @@ interface Props {
 export default function ProjectSettingsPage({ params: paramsPromise }: Props) {
     const router = useRouter();
     const supabase = createClient();
+    const sb = (supabase as any);
     const [projectId, setProjectId] = useState("");
     const [loading, setLoading] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -41,12 +42,12 @@ export default function ProjectSettingsPage({ params: paramsPromise }: Props) {
     useEffect(() => {
         paramsPromise.then(({ projectId: pid }) => {
             setProjectId(pid);
-            supabase
+            sb
                 .from("projects")
                 .select("*")
                 .eq("id", pid)
                 .single()
-                .then(({ data }) => {
+                .then(({ data }: { data: any }) => {
                     if (data) {
                         setForm({
                             name: data.name ?? "",
@@ -66,7 +67,7 @@ export default function ProjectSettingsPage({ params: paramsPromise }: Props) {
         e.preventDefault();
         setLoading(true);
         try {
-            const { error } = await supabase
+            const { error } = await sb
                 .from("projects")
                 .update({ ...form, updated_at: new Date().toISOString() })
                 .eq("id", projectId);
@@ -83,7 +84,7 @@ export default function ProjectSettingsPage({ params: paramsPromise }: Props) {
         if (!confirm("Delete this project? This cannot be undone. All documents and data will be permanently deleted.")) return;
         setDeleting(true);
         try {
-            const { error } = await supabase.from("projects").delete().eq("id", projectId);
+            const { error } = await sb.from("projects").delete().eq("id", projectId);
             if (error) throw error;
             toast.success("Project deleted");
             router.push("/projects");

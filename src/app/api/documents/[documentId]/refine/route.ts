@@ -11,6 +11,7 @@ export async function POST(
 ) {
     const { documentId } = await params;
     const supabase = await createClient();
+    const sb = (supabase as any);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,13 +23,14 @@ export async function POST(
     }
 
     // Load latest version
-    const { data: latestVersion } = await supabase
+    const { data: latestVersionRes } = await sb
         .from("document_versions")
         .select("*")
         .eq("document_id", documentId)
         .order("version_number", { ascending: false })
         .limit(1)
         .single();
+    const latestVersion = latestVersionRes;
 
     if (!latestVersion) {
         return NextResponse.json(
@@ -38,7 +40,7 @@ export async function POST(
     }
 
     // Save user message
-    await supabase.from("chat_messages").insert({
+    await sb.from("chat_messages").insert({
         document_id: documentId,
         role: "user",
         content_text: instruction,
@@ -101,7 +103,7 @@ Return the minimal patch operations needed. Only change what was explicitly aske
 
     // Save new version
     const nextVersion = latestVersion.version_number + 1;
-    const { error: versionErr } = await supabase.from("document_versions").insert({
+    const { error: versionErr } = await sb.from("document_versions").insert({
         document_id: documentId,
         version_number: nextVersion,
         content_json: updatedContent as Record<string, unknown>,
@@ -114,7 +116,7 @@ Return the minimal patch operations needed. Only change what was explicitly aske
     }
 
     // Save assistant message
-    await supabase.from("chat_messages").insert({
+    await sb.from("chat_messages").insert({
         document_id: documentId,
         role: "assistant",
         content_text: `✅ ${patch.summary} (v${nextVersion})`,

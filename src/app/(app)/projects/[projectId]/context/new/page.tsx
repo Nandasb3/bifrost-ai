@@ -26,6 +26,7 @@ export default function NewContextPage({ params: paramsPromise }: Props) {
     const router = useRouter();
     const [projectId, setProjectId] = useState<string>("");
     const supabase = createClient();
+    const sb = (supabase as any);
     const [loading, setLoading] = useState(false);
     const [tagInput, setTagInput] = useState("");
     const [tags, setTags] = useState<string[]>([]);
@@ -59,7 +60,7 @@ export default function NewContextPage({ params: paramsPromise }: Props) {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Not authenticated");
 
-            const { error } = await supabase.from("context_items").insert({
+            const { error } = await sb.from("context_items").insert({
                 project_id: projectId,
                 type: form.type,
                 title: form.title,

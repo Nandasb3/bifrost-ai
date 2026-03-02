@@ -22,6 +22,7 @@ export default function NewDocumentPage({ params: paramsPromise }: Props) {
     const defaultType = (searchParams.get("type") ?? "PRD") as "BRD" | "PRD";
     const [projectId, setProjectId] = useState<string>("");
     const supabase = createClient();
+    const sb = (supabase as any);
     const [loading, setLoading] = useState(false);
     const [contextItems, setContextItems] = useState<Array<{ id: string; title: string; type: string }>>([]);
     const [selectedContext, setSelectedContext] = useState<string[]>([]);
@@ -35,11 +36,11 @@ export default function NewDocumentPage({ params: paramsPromise }: Props) {
     useEffect(() => {
         paramsPromise.then(({ projectId: pid }) => {
             setProjectId(pid);
-            supabase
+            sb
                 .from("context_items")
                 .select("id, title, type")
                 .eq("project_id", pid)
-                .then(({ data }) => setContextItems(data ?? []));
+                .then(({ data }: { data: any[] | null }) => setContextItems(data ?? []));
         });
     }, []);
 
@@ -59,7 +60,7 @@ export default function NewDocumentPage({ params: paramsPromise }: Props) {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Not authenticated");
 
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from("documents")
                 .insert({
                     project_id: projectId,
@@ -111,8 +112,8 @@ export default function NewDocumentPage({ params: paramsPromise }: Props) {
                                 type="button"
                                 onClick={() => field("type", type)}
                                 className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all border ${form.type === type
-                                        ? "gradient-primary text-white border-transparent shadow-lg shadow-primary/20"
-                                        : "border-white/10 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                                    ? "gradient-primary text-white border-transparent shadow-lg shadow-primary/20"
+                                    : "border-white/10 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                                     }`}
                             >
                                 {type === "BRD" ? "Business Requirements (BRD)" : "Product Requirements (PRD)"}
@@ -174,8 +175,8 @@ export default function NewDocumentPage({ params: paramsPromise }: Props) {
                                 <label
                                     key={item.id}
                                     className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${selectedContext.includes(item.id)
-                                            ? "bg-primary/10 border border-primary/20"
-                                            : "hover:bg-white/5 border border-transparent"
+                                        ? "bg-primary/10 border border-primary/20"
+                                        : "hover:bg-white/5 border border-transparent"
                                         }`}
                                 >
                                     <Checkbox

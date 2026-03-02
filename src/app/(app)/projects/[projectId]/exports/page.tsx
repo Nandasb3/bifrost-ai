@@ -82,6 +82,7 @@ const statusIcon = {
 
 export default function ExportsPage({ params: paramsPromise, searchParams: spPromise }: Props) {
     const supabase = createClient();
+    const sb = (supabase as any);
     const [projectId, setProjectId] = useState("");
     const [documentId, setDocumentId] = useState("");
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -94,11 +95,11 @@ export default function ExportsPage({ params: paramsPromise, searchParams: spPro
             setProjectId(pid);
             setDocumentId(did ?? "");
 
-            supabase.from("projects").select("name").eq("id", pid).single()
-                .then(({ data }) => setProjectName(data?.name ?? ""));
+            sb.from("projects").select("name").eq("id", pid).single()
+                .then(({ data }: any) => setProjectName(data?.name ?? ""));
 
-            supabase.from("documents").select("id, title, type").eq("project_id", pid)
-                .then(({ data }) => setDocuments(data ?? []));
+            sb.from("documents").select("id, title, type").eq("project_id", pid)
+                .then(({ data }: any) => setDocuments(data ?? []));
 
             const docId = did ?? "";
             if (docId) loadJobs(docId);
@@ -106,7 +107,7 @@ export default function ExportsPage({ params: paramsPromise, searchParams: spPro
     }, []);
 
     const loadJobs = async (docId: string) => {
-        const { data } = await supabase
+        const { data } = await sb
             .from("export_jobs")
             .select("*")
             .eq("document_id", docId)
@@ -189,8 +190,8 @@ export default function ExportsPage({ params: paramsPromise, searchParams: spPro
                                 loadJobs(doc.id);
                             }}
                             className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all border ${documentId === doc.id
-                                    ? "gradient-primary text-white border-transparent shadow-lg shadow-primary/20"
-                                    : "border-white/10 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                                ? "gradient-primary text-white border-transparent shadow-lg shadow-primary/20"
+                                : "border-white/10 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                                 }`}
                         >
                             {doc.type}: {doc.title}

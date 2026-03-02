@@ -20,19 +20,21 @@ export default async function DocumentsPage({ params }: Props) {
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const { data: project } = await supabase
+    const { data: projectRes } = await (supabase as any)
         .from("projects")
         .select("name")
         .eq("id", projectId)
         .single();
+    const project = projectRes;
 
     if (!project) notFound();
 
-    const { data: documents } = await supabase
+    const { data: documentsRes } = await (supabase as any)
         .from("documents")
         .select("*")
         .eq("project_id", projectId)
         .order("updated_at", { ascending: false });
+    const documents = documentsRes as any[];
 
     const brds = documents?.filter((d) => d.type === "BRD") ?? [];
     const prds = documents?.filter((d) => d.type === "PRD") ?? [];

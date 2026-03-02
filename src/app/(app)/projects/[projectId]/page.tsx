@@ -23,18 +23,21 @@ export default async function ProjectOverviewPage({ params }: Props) {
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const { data: project, error } = await supabase
+    const { data: projectRes, error } = await (supabase as any)
         .from("projects")
         .select("*")
         .eq("id", projectId)
         .single();
+    const project = projectRes;
 
     if (error || !project) notFound();
 
-    const [{ data: contextItems }, { data: documents }] = await Promise.all([
-        supabase.from("context_items").select("id").eq("project_id", projectId),
-        supabase.from("documents").select("id, type, status").eq("project_id", projectId),
+    const [contextRes, docsRes] = await Promise.all([
+        (supabase as any).from("context_items").select("id").eq("project_id", projectId),
+        (supabase as any).from("documents").select("id, type, status").eq("project_id", projectId),
     ]);
+    const contextItems = contextRes.data;
+    const documents = docsRes.data;
 
     const cards = [
         {

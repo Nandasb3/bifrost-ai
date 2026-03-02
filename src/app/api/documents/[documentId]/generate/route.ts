@@ -16,17 +16,19 @@ export async function POST(
 ) {
     const { documentId } = await params;
     const supabase = await createClient();
+    const sb = (supabase as any);
 
     // Auth check
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Load document with project
-    const { data: doc, error: docErr } = await supabase
+    const { data: docRes, error: docErr } = await sb
         .from("documents")
         .select("*, projects(*)")
         .eq("id", documentId)
         .single();
+    const doc = docRes;
 
     if (docErr || !doc) {
         return NextResponse.json({ error: "Document not found" }, { status: 404 });
@@ -36,10 +38,11 @@ export async function POST(
     const contextItemIds = Array.isArray(doc.context_item_ids) ? doc.context_item_ids : [];
     let contextText = "";
     if (contextItemIds.length > 0) {
-        const { data: ctxItems } = await supabase
+        const { data: ctxItemsRes } = await sb
             .from("context_items")
             .select("type, title, content")
             .in("id", contextItemIds);
+        const ctxItems = (ctxItemsRes as any[]) ?? [];
         contextText = ctxItems
             ?.map((c) => `[${c.type.toUpperCase()}] ${c.title}\n${c.content}`)
             .join("\n\n---\n\n") ?? "";
@@ -152,7 +155,7 @@ Return JSON matching this structure:
     });
 
     // Get current max version
-    const { data: versions } = await supabase
+    const { data: versions } = await sb
         .from("document_versions")
         .select("version_number")
         .eq("document_id", documentId)
@@ -161,7 +164,7 @@ Return JSON matching this structure:
     const nextVersion = (versions?.[0]?.version_number ?? 0) + 1;
 
     // Save version
-    const { error: versionErr } = await supabase.from("document_versions").insert({
+    const { error: versionErr } = await sb.from("document_versions").insert({
         document_id: documentId,
         version_number: nextVersion,
         content_json: generatedContent as unknown as Record<string, unknown>,
@@ -174,7 +177,7 @@ Return JSON matching this structure:
     }
 
     // Save chat message
-    await supabase.from("chat_messages").insert({
+    await sb.from("chat_messages").insert({
         document_id: documentId,
         role: "assistant",
         content_text: `✅ Generated ${doc.type} v${nextVersion}. ${gate.errors.length > 0 ? `⚠️ Quality gate: ${gate.errors.length} issues found.` : "Quality gate passed."}`,

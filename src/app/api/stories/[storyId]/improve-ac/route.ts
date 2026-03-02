@@ -19,15 +19,17 @@ export async function POST(
 ) {
     const { storyId } = await params;
     const supabase = await createClient();
+    const sb = (supabase as any);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: story } = await supabase
+    const { data: storyRes } = await sb
         .from("stories")
         .select("*, acceptance_criteria(*)")
         .eq("id", storyId)
         .single();
+    const story = storyRes;
 
     if (!story) return NextResponse.json({ error: "Story not found" }, { status: 404 });
 
@@ -66,8 +68,8 @@ Return JSON array:
         const improvedACs = result.data;
 
         // Replace all ACs for this story
-        await supabase.from("acceptance_criteria").delete().eq("story_id", storyId);
-        await supabase.from("acceptance_criteria").insert(
+        await sb.from("acceptance_criteria").delete().eq("story_id", storyId);
+        await sb.from("acceptance_criteria").insert(
             improvedACs.map((ac, idx) => ({
                 story_id: storyId,
                 type: ac.type,

@@ -22,11 +22,12 @@ export default async function EpicsPage({ params, searchParams }: Props) {
     const { documentId } = await searchParams;
     const supabase = await createClient();
 
-    const { data: project } = await supabase
+    const { data: projectRes } = await (supabase as any)
         .from("projects")
         .select("name")
         .eq("id", projectId)
         .single();
+    const project = projectRes;
 
     if (!project) notFound();
 
@@ -40,22 +41,24 @@ export default async function EpicsPage({ params, searchParams }: Props) {
         epicsQuery = epicsQuery.eq("document_id", documentId);
     } else {
         // Join through documents to filter by project
-        epicsQuery = supabase
+        epicsQuery = (supabase as any)
             .from("epics")
             .select("*, documents!inner(title, type, project_id)")
             .eq("documents.project_id", projectId)
             .order("sort_order");
     }
 
-    const { data: epics } = await epicsQuery;
+    const { data: epicsRes } = await epicsQuery;
+    const epics = epicsRes as any[];
 
     const epicIds = epics?.map((e) => e.id) ?? [];
-    const { data: storyCounts } = epicIds.length > 0
-        ? await supabase
+    const storyCountsRes = epicIds.length > 0
+        ? await (supabase as any)
             .from("stories")
             .select("epic_id")
             .in("epic_id", epicIds)
         : { data: [] };
+    const storyCounts = (storyCountsRes.data as any[]) ?? [];
 
     const storyCountMap = storyCounts?.reduce<Record<string, number>>((acc, s) => {
         acc[s.epic_id] = (acc[s.epic_id] || 0) + 1;

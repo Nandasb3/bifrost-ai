@@ -7,10 +7,11 @@ import { formatDistanceToNow } from "date-fns";
 
 export default async function ProjectsPage() {
     const supabase = await createClient();
-    const { data: projects } = await supabase
+    const { data: projectsRes } = await (supabase as any)
         .from("projects")
         .select("*")
         .order("updated_at", { ascending: false });
+    const projects = projectsRes as any[];
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-6">

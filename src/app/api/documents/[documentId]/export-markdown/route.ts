@@ -8,12 +8,13 @@ export async function POST(
 ) {
     const { documentId } = await params;
     const supabase = await createClient();
+    const sb = (supabase as any);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Create queued job
-    const { data: job, error: jobErr } = await supabase
+    const { data: job, error: jobErr } = await sb
         .from("export_jobs")
         .insert({
             document_id: documentId,
@@ -29,14 +30,14 @@ export async function POST(
     try {
         const content = await generateMarkdownExport(supabase, documentId);
 
-        await supabase
+        await sb
             .from("export_jobs")
             .update({ status: "completed", artifact_content: content, completed_at: new Date().toISOString() })
             .eq("id", job.id);
 
         return NextResponse.json({ success: true, job_id: job.id, content });
     } catch (err: unknown) {
-        await supabase
+        await sb
             .from("export_jobs")
             .update({ status: "failed", error_text: err instanceof Error ? err.message : "Unknown error" })
             .eq("id", job.id);

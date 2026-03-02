@@ -21,6 +21,7 @@ export default function UploadContextPage({ params: paramsPromise }: Props) {
     const router = useRouter();
     const [projectId, setProjectId] = useState<string>("");
     const supabase = createClient();
+    const sb = (supabase as any);
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [notes, setNotes] = useState("");
@@ -44,13 +45,13 @@ export default function UploadContextPage({ params: paramsPromise }: Props) {
             const ext = file.name.split(".").pop() ?? "bin";
             const storagePath = `${projectId}/${Date.now()}_${file.name}`;
 
-            const { error: storageError } = await supabase.storage
+            const { error: storageError } = await sb.storage
                 .from("context-files")
                 .upload(storagePath, file);
 
             if (storageError) throw storageError;
 
-            const { error: dbError } = await supabase.from("context_items").insert({
+            const { error: dbError } = await sb.from("context_items").insert({
                 project_id: projectId,
                 type: "requirement",
                 title: file.name.replace(`.${ext}`, ""),
@@ -121,8 +122,8 @@ export default function UploadContextPage({ params: paramsPromise }: Props) {
                             <label
                                 htmlFor="file"
                                 className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 cursor-pointer transition-colors ${file
-                                        ? "border-primary/40 bg-primary/5"
-                                        : "border-white/15 hover:border-primary/30 hover:bg-white/3"
+                                    ? "border-primary/40 bg-primary/5"
+                                    : "border-white/15 hover:border-primary/30 hover:bg-white/3"
                                     }`}
                             >
                                 {file ? (

@@ -21,6 +21,7 @@ import { toast } from "sonner";
 export default function NewProjectPage() {
     const router = useRouter();
     const supabase = createClient();
+    const sb = (supabase as any);
     const [loading, setLoading] = useState(false);
     const [techStackInput, setTechStackInput] = useState("");
     const [techStack, setTechStack] = useState<string[]>([]);
@@ -56,7 +57,7 @@ export default function NewProjectPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Not authenticated");
 
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from("projects")
                 .insert({
                     ...form,

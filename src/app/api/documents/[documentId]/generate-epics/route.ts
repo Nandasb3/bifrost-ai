@@ -9,18 +9,20 @@ export async function POST(
 ) {
     const { documentId } = await params;
     const supabase = await createClient();
+    const sb = (supabase as any);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Load current PRD content
-    const { data: version } = await supabase
+    const { data: versionRes } = await sb
         .from("document_versions")
         .select("content_json, version_number")
         .eq("document_id", documentId)
         .order("version_number", { ascending: false })
         .limit(1)
         .single();
+    const version = versionRes;
 
     if (!version) {
         return NextResponse.json(
@@ -29,11 +31,12 @@ export async function POST(
         );
     }
 
-    const { data: doc } = await supabase
+    const { data: docRes } = await sb
         .from("documents")
         .select("*, projects(name, domain, tech_stack, story_format)")
         .eq("id", documentId)
         .single();
+    const doc = docRes;
 
     if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
     const project = doc.projects as Record<string, unknown>;
@@ -84,7 +87,7 @@ Return a JSON array where each epic matches:
     }
 
     // Clear old epics for this document and insert new ones
-    await supabase.from("epics").delete().eq("document_id", documentId);
+    await sb.from("epics").delete().eq("document_id", documentId);
 
     const epicInserts = epics.map((epic, idx) => ({
         document_id: documentId,
@@ -97,7 +100,7 @@ Return a JSON array where each epic matches:
         sort_order: idx,
     }));
 
-    const { data: insertedEpics, error: insertErr } = await supabase
+    const { data: insertedEpics, error: insertErr } = await sb
         .from("epics")
         .insert(epicInserts)
         .select();
@@ -107,7 +110,7 @@ Return a JSON array where each epic matches:
     }
 
     // Chat message
-    await supabase.from("chat_messages").insert({
+    await sb.from("chat_messages").insert({
         document_id: documentId,
         role: "assistant",
         content_text: `✅ Generated ${epics.length} epics successfully.`,

@@ -29,15 +29,16 @@ export default async function StoriesPage({ params, searchParams }: Props) {
     const { documentId, epicId } = await searchParams;
     const supabase = await createClient();
 
-    const { data: project } = await supabase
+    const { data: projectRes } = await (supabase as any)
         .from("projects")
         .select("name")
         .eq("id", projectId)
         .single();
+    const project = projectRes;
 
     if (!project) notFound();
 
-    let storiesQuery = supabase
+    let storiesQuery = (supabase as any)
         .from("stories")
         .select("*, epics(title, document_id)")
         .order("sort_order");
@@ -45,25 +46,27 @@ export default async function StoriesPage({ params, searchParams }: Props) {
     if (epicId) {
         storiesQuery = storiesQuery.eq("epic_id", epicId);
     } else if (documentId) {
-        storiesQuery = supabase
+        storiesQuery = (supabase as any)
             .from("stories")
             .select("*, epics!inner(title, document_id)")
             .eq("epics.document_id", documentId)
             .order("sort_order");
     } else {
-        storiesQuery = supabase
+        storiesQuery = (supabase as any)
             .from("stories")
             .select("*, epics!inner(title, document_id, documents!inner(project_id))")
             .eq("epics.documents.project_id", projectId)
             .order("sort_order");
     }
 
-    const { data: stories } = await storiesQuery;
+    const { data: storiesRes } = await storiesQuery;
+    const stories = storiesRes as any[];
     const storyIds = stories?.map((s) => s.id) ?? [];
 
-    const { data: acCounts } = storyIds.length > 0
-        ? await supabase.from("acceptance_criteria").select("story_id").in("story_id", storyIds)
+    const acCountsRes = storyIds.length > 0
+        ? await (supabase as any).from("acceptance_criteria").select("story_id").in("story_id", storyIds)
         : { data: [] };
+    const acCounts = (acCountsRes.data as any[]) ?? [];
 
     const acCountMap = acCounts?.reduce<Record<string, number>>((acc, ac) => {
         acc[ac.story_id] = (acc[ac.story_id] || 0) + 1;

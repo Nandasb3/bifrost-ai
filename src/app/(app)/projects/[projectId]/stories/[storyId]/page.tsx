@@ -22,19 +22,21 @@ export default async function StoryDetailPage({ params }: Props) {
     const { projectId, storyId } = await params;
     const supabase = await createClient();
 
-    const { data: story } = await supabase
+    const { data: storyRes } = await (supabase as any)
         .from("stories")
         .select("*, epics(title, document_id)")
         .eq("id", storyId)
         .single();
+    const story = storyRes;
 
     if (!story) notFound();
 
-    const { data: acs } = await supabase
+    const { data: acsRes } = await (supabase as any)
         .from("acceptance_criteria")
         .select("*")
         .eq("story_id", storyId)
         .order("sort_order");
+    const acs = acsRes as any[];
 
     const acCount = acs?.length ?? 0;
     const qualityOk = acCount >= 3;

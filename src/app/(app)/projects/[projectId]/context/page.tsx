@@ -24,19 +24,21 @@ export default async function ContextPage({ params }: Props) {
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const { data: project } = await supabase
+    const { data: projectRes } = await (supabase as any)
         .from("projects")
         .select("name")
         .eq("id", projectId)
         .single();
+    const project = projectRes;
 
     if (!project) notFound();
 
-    const { data: items } = await supabase
+    const { data: itemsRes } = await (supabase as any)
         .from("context_items")
         .select("*")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
+    const items = itemsRes as any[];
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-6">

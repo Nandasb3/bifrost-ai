@@ -10,16 +10,18 @@ export async function POST(
 ) {
     const { documentId } = await params;
     const supabase = await createClient();
+    const sb = (supabase as any);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Load epics
-    const { data: epics } = await supabase
+    const { data: epicsRes } = await sb
         .from("epics")
         .select("*")
         .eq("document_id", documentId)
         .order("sort_order");
+    const epics = epicsRes as any[];
 
     if (!epics || epics.length === 0) {
         return NextResponse.json(
@@ -28,11 +30,12 @@ export async function POST(
         );
     }
 
-    const { data: doc } = await supabase
+    const { data: docRes } = await sb
         .from("documents")
         .select("*, projects(name, domain, story_format, definition_of_done)")
         .eq("id", documentId)
         .single();
+    const doc = docRes;
 
     if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
     const project = doc.projects as Record<string, unknown>;
@@ -124,19 +127,19 @@ Rules:
 
     // Clear existing stories/ACs for this document's epics
     const epicIds = epics.map((e) => e.id);
-    const { data: existingStories } = await supabase
+    const { data: existingStories } = await sb
         .from("stories")
         .select("id")
         .in("epic_id", epicIds);
     if (existingStories && existingStories.length > 0) {
-        const storyIds = existingStories.map((s) => s.id);
-        await supabase.from("acceptance_criteria").delete().in("story_id", storyIds);
-        await supabase.from("stories").delete().in("id", storyIds);
+        const storyIds = existingStories.map((s: any) => s.id);
+        await sb.from("acceptance_criteria").delete().in("story_id", storyIds);
+        await sb.from("stories").delete().in("id", storyIds);
     }
 
     // Insert stories and ACs
     for (const story of allStories) {
-        const { data: insertedStory, error: storyErr } = await supabase
+        const { data: insertedStory, error: storyErr } = await sb
             .from("stories")
             .insert({
                 epic_id: story.epicId,
@@ -154,7 +157,7 @@ Rules:
         if (storyErr || !insertedStory) continue;
 
         if (story.acceptance_criteria && story.acceptance_criteria.length > 0) {
-            await supabase.from("acceptance_criteria").insert(
+            await sb.from("acceptance_criteria").insert(
                 story.acceptance_criteria.map((ac, idx) => ({
                     story_id: insertedStory.id,
                     type: ac.type,
@@ -168,7 +171,7 @@ Rules:
         }
     }
 
-    await supabase.from("chat_messages").insert({
+    await sb.from("chat_messages").insert({
         document_id: documentId,
         role: "assistant",
         content_text: `✅ Generated ${allStories.length} stories with acceptance criteria across ${epics.length} epics.${gate.errors.length > 0 ? ` ⚠️ ${gate.errors.length} quality issues.` : " Quality gate passed."}`,
