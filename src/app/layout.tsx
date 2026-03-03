@@ -26,6 +26,7 @@ export default function RootLayout({
         <TooltipProvider>
           {children}
           <Toaster position="top-right" richColors />
+          <script src="https://apis.google.com/js/api.js" async defer></script>
         </TooltipProvider>
       </body>
     </html>
